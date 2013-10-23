@@ -33,10 +33,10 @@ love it. So a Haskell implementation it is :)
 
 ## To Do List
 
-[X] Load image
-[ ] Process image: Face recognition
-[ ] Process image: Downsize
-[ ] Process image: Intelligent downsampling
-[X] Convert image to luminance
-[ ] Generate stitch pattern and palette metadata
-[ ] Output to ???
+- [x] Load image
+- [ ] Process image: Face recognition
+- [ ] Process image: Downsize
+- [ ] Process image: Intelligent downsampling
+- [x] Convert image to luminance
+- [ ] Generate stitch pattern and palette metadata
+- [ ] Output to ???
