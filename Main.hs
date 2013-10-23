@@ -3,11 +3,7 @@ module Main where
 import System.Environment (getArgs)
 import Codec.Picture
 
-showDetails :: DynamicImage -> IO ()
-showDetails (ImageRGBA8 img) = do
-  print $ imageData img
---showDetails img = promoteImage img
-showDetails _ = print "Unhandled colourspace"
+import Illuminate
 
 main :: IO ()
 main = do
@@ -18,4 +14,4 @@ main = do
       dynImage <- readImage filename
       case dynImage of
         Left  err -> putStrLn err
-        Right img -> showDetails img
+        Right img -> print $ toLuminance img
