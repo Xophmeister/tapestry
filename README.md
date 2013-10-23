@@ -14,13 +14,13 @@ That is:
 * Put everything together and print on several pieces of paper.
 
 Note that a significant amount of preprocessing was also done to the
-image to put it into a "useful" state. Ordinarily, its downsampled to
+image to put it into a "useful" state. Ordinarily, it's downsampled to
 eight shades of grey (as it's hard to find wool in other colours with a
 good range of graduations), but this has to be done sensitively: You
-need to strike a balance, in the dithering, between high-complexity
-(i.e., painful to sew) and image quality. Also, it's worth pointing out
+need to strike a balance, in the dithering, between complexity (i.e.,
+awkwardness to sew) and image quality. Also, it's worth pointing out
 that the resolution of such embroideries is pretty low; like 100×125 at
-about 12dpi.
+about 12dpi low.
 
 Anyway, did I mention how long ago this was? Well, it turns out that
 said VB programme doesn't work on modern platforms. Moreover, I have
@@ -28,8 +28,8 @@ less time to do all the necessary pre- and postprocessing. However, I
 still want to make these things for my grandma: It gives her something
 to do and the output actually looks pretty cool.
 
-So I'm remaking it, but in the hope of having it work fully
+So I'm remaking it, but in the hope of having it work (almost) fully
 automatically! I had planned on using Node.js, but I'm getting pretty
 sick of all that asynchronous nonsense and I've been teaching myself
-Haskell, which is a joy to a mathematician. A Haskell implementation it
-is!
+Haskell, which is a joy to an ex-mathematician. A Haskell implementation
+it is!
