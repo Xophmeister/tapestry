@@ -1,5 +1,4 @@
 module Illuminate (
-  ImageData,
   getImageData
 ) where
 
