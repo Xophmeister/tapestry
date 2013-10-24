@@ -3,6 +3,9 @@ module Encode (encodeLuminance) where
 import Data.List.Split (chunksOf)
 import Types
 
+defaultPalette :: String
+defaultPalette = "\9633\9675\9678\9673\9632\9679\10070\9733"
+
 palettise :: Palette -> Float -> Char
 palettise palette luminance
   | luminance < 0.125 = palette !! 7 -- Pure black
@@ -15,4 +18,4 @@ palettise palette luminance
   | otherwise         = head palette -- Pure white
 
 encodeLuminance :: ImageData -> [String]
-encodeLuminance (ImageData w _ stream) = chunksOf w $ map (palettise " .:oO%8#") stream
+encodeLuminance (ImageData w _ stream) = chunksOf w $ map (palettise defaultPalette) stream
