@@ -1,9 +1,9 @@
 module Main where
 
 import System.Environment (getArgs)
-import Codec.Picture
-
+import Codec.Picture (readImage)
 import Illuminate
+import Encode
 
 main :: IO ()
 main = do
@@ -14,4 +14,4 @@ main = do
       dynImage <- readImage filename
       case dynImage of
         Left  err -> error err
-        Right img -> print $ getImageData img
+        Right img -> putStr $ (unlines . encodeLuminance . processImage) img

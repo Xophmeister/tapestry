@@ -1,9 +1,8 @@
-module Illuminate (
-  getImageData
-) where
+module Illuminate (processImage) where
 
-import Data.Vector.Storable
+import Data.Vector.Storable (toList)
 import Codec.Picture.Types
+import Types (ImageData(..))
 
 -- Convert generic image to greyscale
 -- n.b., We don't consider 16-bit images, but we
@@ -20,11 +19,7 @@ illuminate image = promoteImage $ toGrey image
           where toRGB = convertImage :: Image PixelCMYK8 -> Image PixelRGB8
         toGrey _                   = error "Unhandled colourspace"
 
--- Width::Int Height::Int Data::[Float]
-data ImageData = ImageData Int Int [Float]
-  deriving (Show)
-
 -- Illuminate image and return data
-getImageData :: DynamicImage -> ImageData
-getImageData image = ImageData (imageWidth lumImage) (imageHeight lumImage) (toList $ imageData lumImage)
+processImage :: DynamicImage -> ImageData
+processImage image = ImageData (imageWidth lumImage) (imageHeight lumImage) (toList $ imageData lumImage)
   where lumImage = illuminate image
