@@ -15,7 +15,6 @@ data Settings = Settings { inputFile   :: String,
                            inputDPI    :: Int,
                            outputDPI   :: Int,
                            outputFile  :: String }
-                           deriving (Show)
 
 settingsHelp :: ExitCode -> IO a 
 settingsHelp status = do
