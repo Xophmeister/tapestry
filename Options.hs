@@ -43,14 +43,6 @@ options =
     Option "o" ["output"]
       (ReqArg (\x i -> return i { outputFile = x }) "FILENAME")
       "Output file",
-{-
-    Option []  ["force"]
-      (ReqArg (\x i -> case map toLower x of
-                          "grey"    -> return i { forceGrey = True, forceColour = False }
-                          "colour"  -> return i { forceGrey = False, forceColour = True }
-                          otherwise -> settingsHelp $ ExitFailure 1) "COLOUR|GREY")
-      "Force greyscale or colour",
--}
 
     Option [] ["grey"]
       (NoArg (\i -> return i { colourSpace = ForceGrey }))
