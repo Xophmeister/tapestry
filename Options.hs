@@ -1,4 +1,6 @@
-module Options (Settings(..), getSettings) where
+module Options ( ColourSpace,
+                 Settings(..),
+                 getSettings ) where
 
 -- This has been cribbed from:
 -- http://www.haskell.org/haskellwiki/High-level_option_handling_with_GetOpt
@@ -9,15 +11,15 @@ module Options (Settings(..), getSettings) where
 import System.Environment (getArgs)
 import System.Exit
 import System.Console.GetOpt
-import Data.Char (toLower)
+
+data ColourSpace = Adaptive | ForceGrey | ForceColour
 
 data Settings = Settings { inputFile   :: String,
                            paletteFile :: Maybe String,
                            inputDPI    :: Int,
                            outputDPI   :: Int,
                            outputFile  :: String,
-                           forceGrey   :: Bool,
-                           forceColour :: Bool }
+                           colourSpace :: ColourSpace }
 
 settingsHelp :: ExitCode -> IO a 
 settingsHelp status = do
@@ -41,14 +43,23 @@ options =
     Option "o" ["output"]
       (ReqArg (\x i -> return i { outputFile = x }) "FILENAME")
       "Output file",
-
-    Option "f" ["force"]
+{-
+    Option []  ["force"]
       (ReqArg (\x i -> case map toLower x of
                           "grey"    -> return i { forceGrey = True, forceColour = False }
                           "colour"  -> return i { forceGrey = False, forceColour = True }
                           otherwise -> settingsHelp $ ExitFailure 1) "COLOUR|GREY")
-      "Force colour or greyscale",
-      
+      "Force greyscale or colour",
+-}
+
+    Option [] ["grey"]
+      (NoArg (\i -> return i { colourSpace = ForceGrey }))
+      "Force greyscale",
+
+    Option [] ["colour"]
+      (NoArg (\i -> return i { colourSpace = ForceColour }))
+      "Force colour",
+
     Option "h" ["help"]
       (NoArg (\_ -> settingsHelp ExitSuccess)) 
       "Show this help...useful, huh?" ]
@@ -65,6 +76,5 @@ getSettings = do
                               inputDPI    = 1,
                               outputDPI   = 1,
                               outputFile  = "tapestry.html",
-                              forceGrey   = False,
-                              forceColour = False }
+                              colourSpace = Adaptive }
     foldl (>>=) (return defaults) actions
