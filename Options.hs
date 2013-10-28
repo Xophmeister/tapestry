@@ -1,4 +1,4 @@
-module Options ( ColourSpace,
+module Options ( ColourSpace(..),
                  Settings(..),
                  getSettings ) where
 
@@ -13,7 +13,7 @@ import System.Exit
 import System.Console.GetOpt
 import System.FilePath (replaceExtension)
 
-data ColourSpace = Adaptive | ForceGrey | ForceColour
+data ColourSpace = Adaptive | Greyscale | Colour
 
 data Settings = Settings { inputFile   :: String,
                            paletteFile :: Maybe String,
@@ -46,11 +46,11 @@ options =
       "Output file",
 
     Option [] ["grey"]
-      (NoArg (\i -> return i { colourSpace = ForceGrey }))
+      (NoArg (\i -> return i { colourSpace = Greyscale }))
       "Force greyscale",
 
     Option [] ["colour"]
-      (NoArg (\i -> return i { colourSpace = ForceColour }))
+      (NoArg (\i -> return i { colourSpace = Colour }))
       "Force colour",
 
     Option "h" ["help"]
