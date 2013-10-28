@@ -11,6 +11,7 @@ module Options ( ColourSpace,
 import System.Environment (getArgs)
 import System.Exit
 import System.Console.GetOpt
+import System.FilePath (replaceExtension)
 
 data ColourSpace = Adaptive | ForceGrey | ForceColour
 
@@ -67,6 +68,6 @@ getSettings = do
                               paletteFile = Nothing,
                               inputDPI    = 1,
                               outputDPI   = 1,
-                              outputFile  = "tapestry.html",
+                              outputFile  = replaceExtension (head inputFiles) "html",
                               colourSpace = Adaptive }
     foldl (>>=) (return defaults) actions
