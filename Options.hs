@@ -9,12 +9,15 @@ module Options (Settings(..), getSettings) where
 import System.Environment (getArgs)
 import System.Exit
 import System.Console.GetOpt
+import Data.Char (toLower)
 
 data Settings = Settings { inputFile   :: String,
                            paletteFile :: Maybe String,
                            inputDPI    :: Int,
                            outputDPI   :: Int,
-                           outputFile  :: String }
+                           outputFile  :: String,
+                           forceGrey   :: Bool,
+                           forceColour :: Bool }
 
 settingsHelp :: ExitCode -> IO a 
 settingsHelp status = do
@@ -32,12 +35,19 @@ options =
       "Input resolution",
       
     Option "b" ["dpi-out"]
-      (ReqArg (\x i -> return i { outputDPI = read x :: Int}) "DPI")
+      (ReqArg (\x i -> return i { outputDPI = read x :: Int }) "DPI")
       "Output resolution",
 
     Option "o" ["output"]
-      (ReqArg (\x i -> return i { outputFile = x}) "FILENAME")
+      (ReqArg (\x i -> return i { outputFile = x }) "FILENAME")
       "Output file",
+
+    Option "f" ["force"]
+      (ReqArg (\x i -> case map toLower x of
+                          "grey"    -> return i { forceGrey = True, forceColour = False }
+                          "colour"  -> return i { forceGrey = False, forceColour = True }
+                          otherwise -> settingsHelp $ ExitFailure 1) "COLOUR|GREY")
+      "Force colour or greyscale",
       
     Option "h" ["help"]
       (NoArg (\_ -> settingsHelp ExitSuccess)) 
@@ -54,5 +64,7 @@ getSettings = do
                               paletteFile = Nothing,
                               inputDPI    = 1,
                               outputDPI   = 1,
-                              outputFile  = "tapestry.html" }
+                              outputFile  = "tapestry.html",
+                              forceGrey   = False,
+                              forceColour = False }
     foldl (>>=) (return defaults) actions
