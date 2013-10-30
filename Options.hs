@@ -15,11 +15,11 @@ import System.FilePath (replaceExtension)
 
 data ColourSpace = Adaptive | Greyscale | Colour
 
-data Settings = Settings { inputFile   :: String,
-                           paletteFile :: Maybe String,
+data Settings = Settings { inputFile   :: FilePath,
+                           paletteFile :: Maybe FilePath,
                            inputDPI    :: Int,
                            outputDPI   :: Int,
-                           outputFile  :: String,
+                           outputFile  :: FilePath,
                            colourSpace :: ColourSpace }
 
 settingsHelp :: ExitCode -> IO a 
