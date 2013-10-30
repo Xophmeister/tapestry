@@ -1,37 +1,26 @@
-module Palette where
+module Palette ( Palette(..),
+                 getPalette ) where
 
-data Grey = Grey Int
-data RGB  = RGB  Int Int Int
+import System.Exit
+import Codec.Picture.Types
+import Options (ColourSpace(..))
+import Image (ColourStream(..))
 
-data PaletteItem a = PaletteItem Char a
+type Tokens  = [Char]
+data Palette = Palette Tokens ColourStream
 
-type Palette a = [PaletteItem a]
+-- Default palette is linear white to black
+defaultPalette :: Palette
+defaultPalette = Palette ['\9633', '\9675', '\9678', '\9673', '\9632', '\9679', '\10070', '\9733'] 
+                  (Greys [   255,     218,     182,     145,     109,      72,       36,       0 ])
 
-defaultPalette :: Palette Grey
-defaultPalette = [ PaletteItem '\9633'  (Grey 255),  -- Pure white
-                   PaletteItem '\9675'  (Grey 218),
-                   PaletteItem '\9678'  (Grey 182),
-                   PaletteItem '\9673'  (Grey 145),
-                   PaletteItem '\9632'  (Grey 109),
-                   PaletteItem '\9679'  (Grey  72),
-                   PaletteItem '\10070' (Grey  36),
-                   PaletteItem '\9733'  (Grey   0) ] -- Pure black
+convertPalette :: Palette -> ColourSpace -> Palette
+convertPalette palette@(Palette _ (Greys   _))    Greyscale = palette
+convertPalette palette@(Palette _ (Colours _))    Colour    = palette
+convertPalette (Palette tokens (Greys   colours)) Colour    = Palette tokens (Colours $ map promotePixel colours)
+convertPalette (Palette tokens (Colours colours)) Greyscale = Palette tokens (Greys   $ map computeLuma  colours)
 
-greyToRGB :: PaletteItem Grey -> PaletteItem RGB
-greyToRGB (PaletteItem c (Grey x)) = PaletteItem c (RGB x x x)
-
-class Colour a where
-  getPalette :: Maybe String -> Palette a 
-  d :: a -> a -> Double
-
-instance Colour Grey where
-  getPalette Nothing = defaultPalette
-  getPalette (Just paletteFile) = undefined
-
-  d (Grey x) (Grey y) = fromIntegral $ abs $ x - y
-
-instance Colour RGB where
-  getPalette Nothing = map greyToRGB defaultPalette
-  getPalette (Just paletteFile) = undefined
-
-  d (RGB r1 g1 b1) (RGB r2 g2 b2) = sqrt $ fromIntegral $ (r1 - r2)^2 + (g1 - g2)^2 + (b1 - b2)^2
+getPalette :: Maybe FilePath -> ColourSpace -> IO Palette
+getPalette Nothing colourspace = return $ convertPalette defaultPalette colourspace
+getPalette (Just _) _ = do putStrLn "Palette loading not yet implemented!"
+                           exitFailure
