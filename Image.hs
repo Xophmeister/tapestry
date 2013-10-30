@@ -1,4 +1,5 @@
-module Image ( ImageData(..),
+module Image ( ColourStream(..),
+               ImageData(..),
                imageColourspace,
                serialiseImage ) where
 
@@ -8,59 +9,77 @@ import Codec.Picture
 import Codec.Picture.Types
 import Options (ColourSpace(..))
 
-type Width = Int
-type Height = Int
-data ImageData a = ImageData ColourSpace Width Height a 
+data ColourStream = Greys   [Pixel8]
+                  | Colours [PixelRGB8]
 
-imageColourspace :: ImageData a -> ColourSpace
-imageColourspace (ImageData colourspace _ _ _) = colourspace
+type Width     = Int
+type Height    = Int
+data ImageData = ImageData Width Height ColourStream
+
+imageColourspace :: ImageData -> ColourSpace
+imageColourspace (ImageData _ _ (Greys _))   = Greyscale
+imageColourspace (ImageData _ _ (Colours _)) = Colour
 
 dynamicColourspace :: DynamicImage -> ColourSpace
 dynamicColourspace (ImageY8 _)  = Greyscale
 dynamicColourspace (ImageYA8 _) = Greyscale
 dynamicColourspace _            = Colour
 
-serialiseImage :: Num a => FilePath -> ColourSpace -> IO (ImageData a)
+-- Open image and serialise meta data and pixels
+serialiseImage :: FilePath -> ColourSpace -> IO ImageData
 serialiseImage file colourspace = do
   dynImage <- readImage file
 
   case dynImage of
-    Left errStatus -> do 
-      putStrLn $ "Failed to load '" ++ file ++ "': " ++ errStatus
-      exitFailure
+    Left errStatus -> do putStrLn $ "Failed to load '" ++ file ++ "': " ++ errStatus
+                         exitFailure
 
-    Right image ->
-      case colourspace of
-        Greyscale ->
-          return $ ImageData Greyscale 10 10 1
-          
-        Colour ->
-          return $ ImageData Colour 10 10 1
+    Right image    -> normaliseImage image colourspace
 
-        Adaptive ->
-          return $ ImageData (dynamicColourspace image) 10 10 1
+-- Normalise image to either 8-bit greyscale or 24-bit RGB
+normaliseImage :: DynamicImage -> ColourSpace -> IO ImageData
+normaliseImage image colourspace = case colourspace of
 
+  Greyscale -> do
+    normalisedImage <- toGrey image
+    return $ ImageData (imageWidth normalisedImage)
+                       (imageHeight normalisedImage)
+                       (Greys $ (toList . imageData) normalisedImage)
+    
+  Colour -> do
+    normalisedImage <- toRGB image
+    return $ ImageData (imageWidth normalisedImage)
+                       (imageHeight normalisedImage)
+                       (Colours $ (toColours . toList . imageData) normalisedImage)
 
-{- OLD STUFF
+      where toColours :: [Pixel8] -> [PixelRGB8]
+            toColours (r:g:b:xs) = PixelRGB8 r g b : toColours xs
+            toColours _          = []
 
--- Convert generic image to greyscale
--- n.b., We don't consider 16-bit images, but we
--- use PixelF (Floats) so we can potentially
-illuminate :: DynamicImage -> Image PixelF
-illuminate image = promoteImage $ toGrey image
-  where toGrey :: DynamicImage -> Image Pixel8
-        toGrey (ImageY8     img) = img
-        toGrey (ImageYA8    img) = pixelMap dropTransparency img
-        toGrey (ImageRGB8   img) = pixelMap computeLuma img
-        toGrey (ImageRGBA8  img) = pixelMap computeLuma img
-        toGrey (ImageYCbCr8 img) = pixelMap computeLuma img
-        toGrey (ImageCMYK8  img) = pixelMap computeLuma $ toRGB img
-          where toRGB = convertImage :: Image PixelCMYK8 -> Image PixelRGB8
-        toGrey _                   = error "Unhandled colourspace"
+  Adaptive ->
+    normaliseImage image (dynamicColourspace image)
 
--- Illuminate image and return data
-processImage :: DynamicImage -> ImageData
-processImage image = ImageData (imageWidth lumImage) (imageHeight lumImage) (toList $ imageData lumImage)
-  where lumImage = illuminate image
+cannotNormalise :: IO a
+cannotNormalise = do putStrLn "Cannot normalise image: Unhandled colourspace"
+                     exitFailure
 
--}
+-- Convert image to 8-bit greyscale
+toGrey :: DynamicImage -> IO (Image Pixel8)
+toGrey (ImageY8     img) = return img
+toGrey (ImageYA8    img) = return $ pixelMap dropTransparency img
+toGrey (ImageRGB8   img) = return $ pixelMap computeLuma img
+toGrey (ImageRGBA8  img) = return $ pixelMap computeLuma img
+toGrey (ImageYCbCr8 img) = return $ pixelMap computeLuma img
+toGrey (ImageCMYK8  img) = return $ pixelMap computeLuma $ convertCMYK img
+  where convertCMYK = convertImage :: Image PixelCMYK8 -> Image PixelRGB8
+toGrey _                 = cannotNormalise
+
+-- Convert image to 24-bit (RGB) colour
+toRGB :: DynamicImage -> IO (Image PixelRGB8)
+toRGB (ImageY8     img) = return $ promoteImage img
+toRGB (ImageYA8    img) = return $ promoteImage img
+toRGB (ImageRGB8   img) = return img
+toRGB (ImageRGBA8  img) = return $ pixelMap dropTransparency img
+toRGB (ImageYCbCr8 img) = return $ convertImage img
+toRGB (ImageCMYK8  img) = return $ convertImage img
+toRGB _                 = cannotNormalise
