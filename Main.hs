@@ -3,6 +3,7 @@ module Main where
 import Options
 import Image
 import Palette
+import Quantise
 import Encode
 
 main :: IO ()
@@ -10,7 +11,7 @@ main = do
   settings <- getSettings
   image    <- serialiseImage (inputFile settings) (colourSpace settings)
   palette  <- getPalette (paletteFile settings) (imageColourspace image)
-  -- TODO
+  print $ quantise palette image
 
 {- Old stuff
   dynImage <- readImage $ inputFile settings
