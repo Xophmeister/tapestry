@@ -6,15 +6,17 @@ import Image (ImageData(..))
 import Palette (Palette(..))
 
 -- We need to find the distance between colours
+-- n.b., Pixel8 is a synonym for Word8, so we need FlexibleInstances
+-- Also Word8 wraps on overflow, so we need explicit fromIntegral
 class Metric a where
   d :: a -> a -> Double
 
 -- n-dimensional Euclidean metric
 euclidean :: Integral a => [a] -> [a] -> Double
-euclidean a b = sqrt . fromIntegral . sum $ zipWith (\x y -> (x - y)^2) a b
+euclidean a b = sqrt . sum $ zipWith (\u v -> (u - v)^2) x y
+                where x = map fromIntegral a
+                      y = map fromIntegral b
 
--- Pixel8 is a synonym for Word8, so we need FlexibleInstances
--- *and* explicit fromIntegral, to avoid any overflow wrapping.
 instance Metric Pixel8 where
   d a b = euclidean [a] [b]
 
