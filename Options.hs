@@ -12,13 +12,13 @@ import System.Environment (getArgs)
 import System.Exit
 import System.Console.GetOpt
 import System.FilePath (replaceExtension)
+import Data.Ratio
 
 data ColourSpace = Adaptive | Greyscale | Colour
 
 data Settings = Settings { inputFile   :: FilePath,
                            paletteFile :: Maybe FilePath,
-                           inputDPI    :: Int,
-                           outputDPI   :: Int,
+                           dpiScale    :: Rational,
                            outputFile  :: FilePath,
                            colourSpace :: ColourSpace }
 
@@ -34,11 +34,13 @@ options =
       "Palette description file",
 
     Option "a" ["dpi-in"]
-      (ReqArg (\x i -> return i { inputDPI = read x :: Int }) "DPI")
+      (ReqArg (\x i -> let scale = dpiScale i in
+                       return i { dpiScale = scale * (1 % (read x :: Integer)) }) "DPI")
       "Input resolution",
       
     Option "b" ["dpi-out"]
-      (ReqArg (\x i -> return i { outputDPI = read x :: Int }) "DPI")
+      (ReqArg (\x i -> let scale = dpiScale i in
+                       return i { dpiScale = scale * ((read x :: Integer) % 1) }) "DPI")
       "Output resolution",
 
     Option "o" ["output"]
@@ -63,11 +65,14 @@ getSettings = do
   let (actions, inputFiles, _) = getOpt Permute options args
   if null inputFiles then
     settingsHelp $ ExitFailure 1
+
   else do
-    let defaults = Settings { inputFile   = head inputFiles,
+    let defaults = Settings { inputFile   = filename,
                               paletteFile = Nothing,
-                              inputDPI    = 1,
-                              outputDPI   = 1,
-                              outputFile  = replaceExtension (head inputFiles) "html",
+                              dpiScale    = 1,
+                              outputFile  = replaceExtension filename "html",
                               colourSpace = Adaptive }
+
+                   where filename = head inputFiles
+
     foldl (>>=) (return defaults) actions
