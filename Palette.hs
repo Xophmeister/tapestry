@@ -1,7 +1,10 @@
+{-# LANGUAGE FlexibleInstances #-}
 module Palette ( Palette(..),
-                 getPalette ) where
+                 getPalette,
+                 tokenise ) where
 
 import System.Exit
+import Data.List
 import Codec.Picture.Types
 import Options (ColourSpace(..))
 import Image (ColourStream(..))
@@ -24,3 +27,17 @@ getPalette :: Maybe FilePath -> ColourSpace -> IO Palette
 getPalette Nothing colourspace = return $ convertPalette defaultPalette colourspace
 getPalette (Just _) _ = do putStrLn "Palette loading not yet implemented!"
                            exitFailure
+
+class Colour a where
+  tokenise :: Palette -> a -> Maybe Char 
+
+instance Colour Pixel8 where
+  tokenise (Palette tokens (Greys palette)) = getToken palette tokens
+
+instance Colour PixelRGB8 where
+  tokenise (Palette tokens (Colours palette)) = getToken palette tokens
+
+getToken :: (Eq a, Colour a) => [a] -> [Char] -> a -> Maybe Char
+getToken palette tokens colour = case elemIndex colour palette of
+  Just i  -> Just (tokens !! i)
+  Nothing -> Nothing

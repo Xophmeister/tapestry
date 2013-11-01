@@ -1,21 +1,24 @@
-module Encode (encodeLuminance) where
+{-# LANGUAGE FlexibleInstances #-}
+module Encode (encode) where
 
 import Data.List.Split (chunksOf)
-import Types
+import Codec.Picture.Types
+import Image (ColourStream(..), ImageData(..))
+import Palette (Palette(..), tokenise)
 
-defaultPalette :: String
-defaultPalette = "\9633\9675\9678\9673\9632\9679\10070\9733"
+normalise :: Maybe Char -> Char
+normalise (Just x) = x
+normalise Nothing  = '?'
 
-palettise :: Palette -> Float -> Char
-palettise palette luminance
-  | luminance < 0.125 = palette !! 7 -- Pure black
-  | luminance < 0.25  = palette !! 6
-  | luminance < 0.375 = palette !! 5
-  | luminance < 0.5   = palette !! 4
-  | luminance < 0.625 = palette !! 3
-  | luminance < 0.75  = palette !! 2
-  | luminance < 0.875 = palette !! 1
-  | otherwise         = head palette -- Pure white
+class Colour a where
+  encodeImage :: Palette -> Int -> [a] -> [[Char]]
 
-encodeLuminance :: ImageData -> [String]
-encodeLuminance (ImageData w _ stream) = chunksOf w $ map (palettise defaultPalette) stream
+instance Colour Pixel8 where
+  encodeImage palette w stream = chunksOf w $ map (normalise . tokenise palette) stream
+
+instance Colour PixelRGB8 where
+  encodeImage palette w stream = chunksOf w $ map (normalise . tokenise palette) stream
+
+encode :: Palette -> ImageData -> [[Char]]
+encode palette (ImageData w _ (Greys   stream)) = encodeImage palette w stream 
+encode palette (ImageData w _ (Colours stream)) = encodeImage palette w stream 
