@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 module Quantise (quantise) where
 
 import Data.List
@@ -13,22 +14,26 @@ euclidean a b = sqrt . sum $ zipWith (\u v -> (u - v)^2) x y
                 where x = map fromIntegral a
                       y = map fromIntegral b
 
+class Metric a where
+  d :: a -> a -> Double
+
+instance Metric Pixel8 where
+  d a b = euclidean [a] [b]
+
+instance Metric PixelRGB8 where
+  d (PixelRGB8 r1 g1 b1) (PixelRGB8 r2 g2 b2) =
+    euclidean [r1, g1, b1] [r2, g2, b2]
+
 quantise :: Palette -> ImageData -> ImageData
 
-quantise (Palette _ (Greys   paletteStream)) (ImageData w h (Greys   imgStream)) =
-  ImageData w h $ Greys (nearestNeighbourGrey paletteStream imgStream)
+quantise (Palette _ (Greys paletteStream)) (ImageData w h (Greys imgStream)) =
+  ImageData w h $ Greys (nearestNeighbour paletteStream imgStream)
 
 quantise (Palette _ (Colours paletteStream)) (ImageData w h (Colours imgStream)) =
-  ImageData w h $ Colours (nearestNeighbourRGB paletteStream imgStream)
+  ImageData w h $ Colours (nearestNeighbour paletteStream imgStream)
 
 -- Nearest-neighbour quantisation
 -- TODO Probabilistic nearest-neighbour...
-nearestNeighbourGrey :: [Pixel8] -> [Pixel8] -> [Pixel8]
-nearestNeighbourGrey palette = 
+nearestNeighbour :: (Metric a) => [a] -> [a] -> [a]
+nearestNeighbour palette = 
   map (\c -> snd (c, fst $ minimumBy (comparing snd) $ map (\x -> (x, d c x)) palette))
-  where d a b = euclidean [a] [b]
-
-nearestNeighbourRGB :: [PixelRGB8] -> [PixelRGB8] -> [PixelRGB8]
-nearestNeighbourRGB palette = 
-  map (\c -> snd (c, fst $ minimumBy (comparing snd) $ map (\x -> (x, d c x)) palette))
-  where d (PixelRGB8 r1 g1 b1) (PixelRGB8 r2 g2 b2) = euclidean [r1, g1, b1] [r2, g2, b2]
