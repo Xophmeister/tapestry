@@ -9,6 +9,7 @@ import Palette (Palette(..))
 
 -- n-dimensional Euclidean metric, to find the "distance" between colours
 -- n.b., Word8 wraps on overflow, so we need explicit fromIntegral
+--       Also, Pixel8 is a type synonym, so we need FlexibleInstances
 euclidean :: Integral a => [a] -> [a] -> Double
 euclidean a b = sqrt . sum $ zipWith (\u v -> (u - v)^2) x y
                 where x = map fromIntegral a
@@ -33,6 +34,7 @@ quantise (Palette _ (Colours paletteStream)) (ImageData w h (Colours imgStream))
   ImageData w h $ Colours (nearestNeighbour paletteStream imgStream)
 
 -- Nearest-neighbour quantisation
+-- TODO Make this look less like line noise :P
 -- TODO Probabilistic nearest-neighbour...
 nearestNeighbour :: (Metric a) => [a] -> [a] -> [a]
 nearestNeighbour palette = 
