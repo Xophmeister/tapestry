@@ -12,10 +12,10 @@ import Image (ColourStream(..))
 type Tokens  = [Char]
 data Palette = Palette Tokens ColourStream
 
--- Default palette is linear white to black
+-- Default palette is logarithmic white to black
 defaultPalette :: Palette
 defaultPalette = Palette ['\9633', '\9675', '\9678', '\9673', '\9632', '\9679', '\10070', '\9733'] 
-                  (Greys [   255,     218,     182,     145,     109,      72,       36,       0 ])
+                  (Greys [   247,     230,     210,     185,     156,     121,       78,      28 ])
 
 convertPalette :: Palette -> ColourSpace -> Palette
 convertPalette palette@(Palette _ (Greys   _))    Greyscale = palette
