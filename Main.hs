@@ -11,4 +11,4 @@ main = do
   settings <- getSettings
   image    <- serialiseImage (inputFile settings) (colourSpace settings)
   palette  <- getPalette (paletteFile settings) (imageColourspace image)
-  putStr $ encode palette (quantise palette image)
+  writeFile (outputFile settings) $ encode palette (quantise palette image)
