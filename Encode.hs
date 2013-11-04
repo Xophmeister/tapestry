@@ -13,20 +13,30 @@ normaliseChar Nothing  = '?'
 
 class Colour a where
   encodeImage :: Palette -> [a] -> [Char]
+  encodePalette :: [Char] -> [a] -> [(Char, String)]
 
 instance Colour Pixel8 where
   encodeImage palette = map (normaliseChar . tokenise palette)
+  encodePalette tokens colours = zip tokens $ map (\y -> cssRGB y y y) colours
 
 instance Colour PixelRGB8 where
   encodeImage palette = map (normaliseChar . tokenise palette)
+  encodePalette tokens colours = zip tokens $ map (\(PixelRGB8 r g b) -> cssRGB r g b) colours
 
-tableImage :: Int -> [Char] -> [String]
-tableImage w tokens = map (tr . concat) $ chunksOf w $ map (td . htmlEntity) tokens
+outputPipeline :: Int -> Int -> [Char] -> [(Char, String)] -> String
+outputPipeline w h imgTokens paletteTokens =
+  let (tokens, css) = unzip paletteTokens
+      htmlImage     = (table "tapestry" . unlines . map (tr . concat) . chunksOf w . map (td . htmlEntity)) imgTokens
+      htmlPalette   = table "palette" $ (tr . concat . map (td . htmlEntity)) tokens  ++
+                                        (tr . concat . map (\x -> htmlTag "td" [("style", "background: " ++ x)] "&nbsp;")) css
 
--- This is as ugly as balls :P Methinks my approach needs work!
+  in boilerplate $ htmlImage ++ htmlPalette
+
+-- This is as ugly as balls :P
+-- Methinks my approach needs *serious* work!
 encode :: Palette -> ImageData -> String
-encode palette (ImageData w _ (Greys   imgStream)) = (boilerplate . table "tapestry" . unlines . tableImage w . encodeImage palette) imgStream
-encode palette (ImageData w _ (Colours imgStream)) = (boilerplate . table "tapestry" . unlines . tableImage w . encodeImage palette) imgStream
+encode palette@(Palette tokens (Greys   pStream)) (ImageData w h (Greys   imgStream)) = outputPipeline w h (encodeImage palette imgStream) (encodePalette tokens pStream)
+encode palette@(Palette tokens (Colours pStream)) (ImageData w h (Colours imgStream)) = outputPipeline w h (encodeImage palette imgStream) (encodePalette tokens pStream)
 
 -- HTML encoding stuff
 -- This should probably be in its own module...
@@ -45,6 +55,9 @@ htmlTag selector attributes innerHTML = concat [
 
 simpleTag :: String -> String -> String
 simpleTag selector = htmlTag selector []
+
+cssRGB :: (Integral a, Show a) => a -> a -> a -> String
+cssRGB r g b = concat ["rgb(", show r, ", ", show g, ", ", show b, ")"]
 
 td :: String -> String
 td = simpleTag "td"
