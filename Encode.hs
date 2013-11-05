@@ -2,6 +2,7 @@
 module Encode (encode) where
 
 import Data.Char (ord)
+import Data.List (group, sort)
 import Data.List.Split (chunksOf)
 import Codec.Picture.Types
 import Image (ColourStream(..), ImageData(..))
@@ -10,6 +11,10 @@ import Palette (Palette(..), tokenise)
 normaliseChar :: Maybe Char -> Char
 normaliseChar (Just x) = x
 normaliseChar Nothing  = '?'
+
+normaliseInt :: Maybe Int -> Int
+normaliseInt (Just x) = x
+normaliseInt Nothing  = 0
 
 class Colour a where
   encodeImage :: Palette -> [a] -> [Char]
@@ -23,14 +28,20 @@ instance Colour PixelRGB8 where
   encodeImage palette = map (normaliseChar . tokenise palette)
   encodePalette tokens colours = zip tokens $ map (\(PixelRGB8 r g b) -> cssRGB r g b) colours
 
+getCounts :: [(Char, String)] -> [Char] -> [(Char, Int, String)]
+getCounts paletteTokens imgTokens =
+  let imgHistogram = (map (\x -> (head x, length x)) . group . sort) imgTokens
+  in map (\(t, css) -> (t, normaliseInt $ lookup t imgHistogram, css)) paletteTokens
+
 outputPipeline :: Int -> Int -> [Char] -> [(Char, String)] -> String
 outputPipeline w h imgTokens paletteTokens =
-  let (tokens, css) = unzip paletteTokens
-      htmlImage     = (table "tapestry" . unlines . map (tr . concat) . chunksOf w . map (td . htmlEntity)) imgTokens
-      htmlPalette   = table "palette" $ (tr . concat . map (td . htmlEntity)) tokens  ++
-                                        (tr . concat . map (\x -> htmlTag "td" [("style", "background: " ++ x)] "&nbsp;")) css
+  let (tokens, histogram, css) = unzip3 (getCounts paletteTokens imgTokens)
+      htmlImage   = (table "tapestry" . unlines . map (tr . concat) . chunksOf w . map (td . htmlEntity)) imgTokens
+      htmlPalette = table "palette" $ tr (td "Tokens"   ++ concatMap (td . htmlEntity) tokens) ++
+                                      tr (td "Stiches"  ++ concatMap (td . show) histogram) ++
+                                      tr (td "Swatches" ++ concatMap (\x -> htmlTag "td" [("style", "background: " ++ x)] "&nbsp;") css)
 
-  in boilerplate $ htmlImage ++ htmlPalette
+  in boilerplate $ h1 "Plan" ++ htmlImage ++ h1 "Palette" ++ htmlPalette
 
 -- This is as ugly as balls :P
 -- Methinks my approach needs *serious* work!
@@ -67,6 +78,9 @@ tr = simpleTag "tr"
 
 table :: String -> String -> String
 table cssClass = htmlTag "table" [("class", cssClass)]
+
+h1 :: String -> String
+h1 = simpleTag "h1"
 
 boilerplate :: String -> String
 boilerplate innerHTML =
