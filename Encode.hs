@@ -88,10 +88,23 @@ boilerplate innerHTML =
   simpleTag "html" (
     simpleTag "head" (
       simpleTag "title" "Tapestry" ++
-      htmlTag "style" [("type", "text/css")] (
-        "body { background: White }"
-      )
+      htmlTag "style" [("type", "text/css")] outputCSS
     ) ++
     simpleTag "body" 
       innerHTML
   )
+
+  where outputCSS = unlines [ "body { margin: 1cm; }", 
+                              "body * { font-family: \"Lucida Sans Unicode\"; }", 
+                              "h1 { font-size: 20pt; margin: 0.5cm 0cm; }", 
+                              "table.tapestry td { min-width: 0.75cm; min-height: 0.75cm; max-width: 0.75cm; max-height: 0.75cm; text-align: center; border-right: 1px dotted DarkGrey; font-size: 14pt; }", 
+                              "table.tapestry td:nth-of-type(10n) { border-right: 1px solid DarkGrey; }", 
+                              "table.tapestry tr { border-bottom: 1px dotted DarkGrey; }", 
+                              "table.tapestry tr:nth-of-type(10n) { border-bottom: 1px solid DarkGrey; }", 
+                              "table.tapestry td:last-child { border-right: 1px solid black; }", 
+                              "table.tapestry { border: 1px solid Black; border-collapse: collapse; }", 
+                              "table.tapestry tr:last-child { border-bottom: black; }", 
+                              "table.palette { border-spacing: 0.1cm; }", 
+                              "table.palette td { text-align: center; min-width: 2cm; max-width: 2cm; }", 
+                              "table.palette td:first-child { text-align: left; padding-right: 0.5cm; padding-left: 0cm; vertical-align: top; }", 
+                              "table.palette tr:last-child { height: 2cm; }" ]
